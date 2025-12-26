@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Apprenants - TMS</title>
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+    <header>
+        <h1>Gestion des Apprenants</h1>
+        <nav>
+            <ul>
+                <li><a href="../index.html">Accueil</a></li>
+                <li><a href="formations.html">Formations</a></li>
+                <li><a href="formateurs.html">Formateurs</a></li>
+                <li><a href="inscriptions.html">Inscriptions</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section id="apprenants-list">
+            <h2>Liste des Apprenants</h2>
+            <button id="add-apprenant-btn">Ajouter un Apprenant</button>
+            <div id="apprenants-container"></div>
+        </section>
+
+        <section id="apprenant-form" style="display: none;">
+            <h2 id="form-title">Ajouter un Apprenant</h2>
+            <form id="apprenant-form-element">
+                <input type="hidden" id="apprenant-id">
+                <label for="nom">Nom:</label>
+                <input type="text" id="nom" required>
+
+                <label for="prenom">Prénom:</label>
+                <input type="text" id="prenom" required>
+
+                <label for="dateNaissance">Date de naissance:</label>
+                <input type="date" id="dateNaissance" required>
+
+                <label for="age">Âge:</label>
+                <input type="number" id="age" required>
+
+                <label for="email">Email:</label>
+                <input type="email" id="email" required>
+
+                <label for="niveauEtude">Niveau d'étude:</label>
+                <input type="text" id="niveauEtude" required>
+
+                <label for="photo">Photo:</label>
+                <input type="file" id="photo" accept="image/*" required>
+
+                <button type="submit">Enregistrer</button>
+                <button type="button" id="cancel-btn">Annuler</button>
+            </form>
+        </section>
+    </main>
+
+    <script src="../js/api/api.js"></script>
+    <script src="../js/components/header.js"></script>
+    <script src="../js/components/footer.js"></script>
+    <script src="../js/utils/helpers.js"></script>
+    <script src="../js/pages/apprenants.js"></script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Inscriptions - TMS</title>
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+    <header>
+        <h1>Gestion des Inscriptions</h1>
+        <nav>
+            <ul>
+                <li><a href="../index.html">Accueil</a></li>
+                <li><a href="formations.html">Formations</a></li>
+                <li><a href="formateurs.html">Formateurs</a></li>
+                <li><a href="apprenants.html">Apprenants</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section id="inscriptions-list">
+            <h2>Liste des Inscriptions</h2>
+            <button id="add-inscription-btn">Ajouter une Inscription</button>
+            <div id="inscriptions-container"></div>
+        </section>
+
+        <section id="inscription-form" style="display: none;">
+            <h2 id="form-title">Ajouter une Inscription</h2>
+            <form id="inscription-form-element">
+                <input type="hidden" id="inscription-id">
+                <label for="apprenantId">Apprenant:</label>
+                <select id="apprenantId" required></select>
+
+                <label for="formationId">Formation:</label>
+                <select id="formationId" required></select>
+
+                <button type="submit">Enregistrer</button>
+                <button type="button" id="cancel-btn">Annuler</button>
+            </form>
+        </section>
+    </main>
+
+    <script src="../js/api/api.js"></script>
+    <script src="../js/components/header.js"></script>
+    <script src="../js/components/footer.js"></script>
+    <script src="../js/utils/helpers.js"></script>
+    <script src="../js/pages/inscriptions.js"></script>
+</body>
+</html>

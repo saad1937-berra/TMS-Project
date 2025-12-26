@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Formations - TMS</title>
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+    <header>
+        <h1>Gestion des Formations</h1>
+        <nav>
+            <ul>
+                <li><a href="../index.html">Accueil</a></li>
+                <li><a href="formateurs.html">Formateurs</a></li>
+                <li><a href="apprenants.html">Apprenants</a></li>
+                <li><a href="inscriptions.html">Inscriptions</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section id="formations-list">
+            <h2>Liste des Formations</h2>
+            <button id="add-formation-btn">Ajouter une Formation</button>
+            <div id="formations-container"></div>
+        </section>
+
+        <section id="formation-form" style="display: none;">
+            <h2 id="form-title">Ajouter une Formation</h2>
+            <form id="formation-form-element">
+                <input type="hidden" id="formation-id">
+                <label for="titre">Titre:</label>
+                <input type="text" id="titre" required>
+
+                <label for="description">Description:</label>
+                <textarea id="description" required></textarea>
+
+                <label for="categorie">Catégorie:</label>
+                <input type="text" id="categorie" required>
+
+                <label for="dureeHeures">Durée (heures):</label>
+                <input type="number" id="dureeHeures" required>
+
+                <label for="dateDebut">Date de début:</label>
+                <input type="date" id="dateDebut" required>
+
+                <label for="dateFin">Date de fin:</label>
+                <input type="date" id="dateFin" required>
+
+                <label for="niveau">Niveau:</label>
+                <select id="niveau" required>
+                    <option value="Débutant">Débutant</option>
+                    <option value="Intermédiaire">Intermédiaire</option>
+                    <option value="Avancé">Avancé</option>
+                </select>
+
+                <label for="formateurId">Formateur:</label>
+                <select id="formateurId" required></select>
+
+                <label for="capacite">Capacité:</label>
+                <input type="number" id="capacite" required>
+
+                <label for="imageFormation">Image:</label>
+                <input type="file" id="imageFormation" accept="image/*">
+
+                <button type="submit">Enregistrer</button>
+                <button type="button" id="cancel-btn">Annuler</button>
+            </form>
+        </section>
+    </main>
+
+    <script src="../js/api/api.js"></script>
+    <script src="../js/components/header.js"></script>
+    <script src="../js/components/footer.js"></script>
+    <script src="../js/utils/helpers.js"></script>
+    <script src="../js/pages/formations.js"></script>
+</body>
+</html>

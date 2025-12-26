@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TMS - Training Management System</title>
+    <link rel="stylesheet" href="./frontend/styles.css">
+</head>
+<body>
+    <header>
+        <h1>Training Management System</h1>
+        <nav>
+            <ul>
+                <li><a href="./frontend/pages/formations.html">Formations</a></li>
+                <li><a href="./frontend/pages/formateurs.html">Formateurs</a></li>
+                <li><a href="./frontend/pages/apprenants.html">Apprenants</a></li>
+                <li><a href="./frontend/pages/inscriptions.html">Inscriptions</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section id="welcome">
+            <h2>Bienvenue dans le système de gestion de formation</h2>
+            <p>Utilisez le menu de navigation pour accéder aux différentes sections du système.</p>
+        </section>
+
+        <section id="overview">
+            <h3>Aperçu du système</h3>
+            <div class="overview-grid">
+                <div class="overview-item">
+                    <h4>Formations</h4>
+                    <p>Gérer les formations disponibles</p>
+                </div>
+                <div class="overview-item">
+                    <h4>Formateurs</h4>
+                    <p>Gérer les formateurs du système</p>
+                </div>
+                <div class="overview-item">
+                    <h4>Apprenants</h4>
+                    <p>Gérer les apprenants inscrits</p>
+                </div>
+                <div class="overview-item">
+                    <h4>Inscriptions</h4>
+                    <p>Gérer les inscriptions aux formations</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="./frontend/js/api/api.js"></script>
+    <script src="./frontend/js/components/header.js"></script>
+    <script src="./frontend/js/components/footer.js"></script>
+    <script src="./frontend/js/utils/helpers.js"></script>
+</body>
+</html>
