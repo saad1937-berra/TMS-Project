@@ -5,6 +5,48 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestion des Formations - TMS</title>
     <link rel="stylesheet" href="../styles.css">
+    <style>
+        .formation-item {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        #formation-form {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        #formation-form label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        #formation-form input,
+        #formation-form textarea,
+        #formation-form select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            box-sizing: border-box;
+        }
+        .form-actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        .current-image {
+            margin-top: 10px;
+        }
+        .current-image img {
+            max-width: 200px;
+            max-height: 150px;
+            border: 1px solid #ddd;
+            padding: 5px;
+            border-radius: 5px;
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -13,6 +55,7 @@
             <ul>
                 <li><a href="../index.html">Accueil</a></li>
                 <li><a href="formateurs.html">Formateurs</a></li>
+                <li><a href="formations.html" class="active">Formations</a></li>
                 <li><a href="apprenants.html">Apprenants</a></li>
                 <li><a href="inscriptions.html">Inscriptions</a></li>
             </ul>
@@ -28,51 +71,91 @@
 
         <section id="formation-form" style="display: none;">
             <h2 id="form-title">Ajouter une Formation</h2>
-            <form id="formation-form-element">
+            <form id="formation-form-element" enctype="multipart/form-data">
                 <input type="hidden" id="formation-id">
-                <label for="titre">Titre:</label>
-                <input type="text" id="titre" required>
-
-                <label for="description">Description:</label>
-                <textarea id="description" required></textarea>
-
-                <label for="categorie">Catégorie:</label>
-                <input type="text" id="categorie" required>
-
-                <label for="dureeHeures">Durée (heures):</label>
-                <input type="number" id="dureeHeures" required>
-
-                <label for="dateDebut">Date de début:</label>
-                <input type="date" id="dateDebut" required>
-
-                <label for="dateFin">Date de fin:</label>
-                <input type="date" id="dateFin" required>
-
-                <label for="niveau">Niveau:</label>
-                <select id="niveau" required>
-                    <option value="Débutant">Débutant</option>
-                    <option value="Intermédiaire">Intermédiaire</option>
-                    <option value="Avancé">Avancé</option>
-                </select>
-
-                <label for="formateurId">Formateur:</label>
-                <select id="formateurId" required></select>
-
-                <label for="capacite">Capacité:</label>
-                <input type="number" id="capacite" required>
-
-                <label for="imageFormation">Image:</label>
-                <input type="file" id="imageFormation" accept="image/*">
-
-                <button type="submit">Enregistrer</button>
-                <button type="button" id="cancel-btn">Annuler</button>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="titre">Titre *</label>
+                        <input type="text" id="titre" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="categorie">Catégorie *</label>
+                        <input type="text" id="categorie" required placeholder="Ex: Développement Web">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="description">Description *</label>
+                    <textarea id="description" rows="3" required></textarea>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="dureeHeures">Durée (heures) *</label>
+                        <input type="number" id="dureeHeures" min="1" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="capacite">Capacité *</label>
+                        <input type="number" id="capacite" min="1" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="dateDebut">Date de début *</label>
+                        <input type="date" id="dateDebut" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="dateFin">Date de fin *</label>
+                        <input type="date" id="dateFin" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="niveau">Niveau *</label>
+                        <select id="niveau" required>
+                            <option value="">Sélectionnez un niveau</option>
+                            <option value="Débutant">Débutant</option>
+                            <option value="Intermédiaire">Intermédiaire</option>
+                            <option value="Avancé">Avancé</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="formateurId">Formateur *</label>
+                        <select id="formateurId" required>
+                            <option value="">Chargement des formateurs...</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="imageFormation">Image de la formation</label>
+                    <input type="file" id="imageFormation" accept="image/*">
+                    <small id="image-help" style="display: none; color: #666;">
+                        Laissez vide pour garder l'image actuelle
+                    </small>
+                    <div id="current-image" class="current-image" style="display: none;">
+                        <p>Image actuelle :</p>
+                        <img id="current-image-preview" src="" alt="Image actuelle">
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" id="submit-btn">Enregistrer</button>
+                    <button type="button" id="cancel-btn">Annuler</button>
+                    <button type="button" id="delete-btn" style="display: none; background: #f44336; color: white;">Supprimer</button>
+                </div>
             </form>
         </section>
     </main>
 
     <script src="../js/api/api.js"></script>
-    <script src="../js/components/header.js"></script>
-    <script src="../js/components/footer.js"></script>
     <script src="../js/utils/helpers.js"></script>
     <script src="../js/pages/formations.js"></script>
 </body>

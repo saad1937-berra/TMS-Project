@@ -10,16 +10,31 @@ class ApiService {
             ...options
         };
 
-        // Only set Content-Type to application/json if body is not FormData
+        // Ne pas définir Content-Type pour FormData (le navigateur le fera automatiquement avec boundary)
         if (!(options.body instanceof FormData)) {
             config.headers['Content-Type'] = 'application/json';
         }
 
         try {
             const response = await fetch(url, config);
+            
+            // Si la réponse n'est pas OK, essayer de lire le message d'erreur
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                let errorMessage = `HTTP error! status: ${response.status}`;
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.message || errorMessage;
+                } catch (e) {
+                    // Si le corps n'est pas du JSON, utiliser le statut
+                }
+                throw new Error(errorMessage);
             }
+            
+            // Pour les réponses DELETE (204 No Content), ne pas essayer de parser JSON
+            if (response.status === 204) {
+                return { success: true };
+            }
+            
             return await response.json();
         } catch (error) {
             console.error('API request failed:', error);
@@ -27,7 +42,7 @@ class ApiService {
         }
     }
 
-    // Formations
+    // Formations - MODIFIÉ pour utiliser FormData
     async getFormations() {
         return this.request('/formations');
     }
@@ -37,16 +52,18 @@ class ApiService {
     }
 
     async createFormation(data) {
+        // data doit être un FormData pour inclure les fichiers
         return this.request('/formations', {
             method: 'POST',
-            body: JSON.stringify(data)
+            body: data  // FormData directement, pas de JSON.stringify
         });
     }
 
     async updateFormation(id, data) {
+        // data doit être un FormData pour inclure les fichiers
         return this.request(`/formations/${id}`, {
             method: 'PUT',
-            body: JSON.stringify(data)
+            body: data  // FormData directement, pas de JSON.stringify
         });
     }
 
@@ -56,7 +73,7 @@ class ApiService {
         });
     }
 
-    // Formateurs
+    // Formateurs - OK (déjà avec FormData)
     async getFormateurs() {
         return this.request('/formateurs');
     }
@@ -67,15 +84,20 @@ class ApiService {
 
     async createFormateur(data) {
         // Si data est déjà un FormData, l'utiliser directement
-        const formData = data instanceof FormData ? data : new FormData();
-        
-        if (!(data instanceof FormData)) {
-            Object.keys(data).forEach(key => {
-                if (data[key] !== null && data[key] !== undefined) {
-                    formData.append(key, data[key]);
-                }
+        if (data instanceof FormData) {
+            return this.request('/formateurs', {
+                method: 'POST',
+                body: data
             });
         }
+        
+        // Sinon, créer un FormData à partir de l'objet
+        const formData = new FormData();
+        Object.keys(data).forEach(key => {
+            if (data[key] !== null && data[key] !== undefined) {
+                formData.append(key, data[key]);
+            }
+        });
         
         return this.request('/formateurs', {
             method: 'POST',
@@ -84,12 +106,22 @@ class ApiService {
     }
 
     async updateFormateur(id, data) {
+        // Si data est déjà un FormData, l'utiliser directement
+        if (data instanceof FormData) {
+            return this.request(`/formateurs/${id}`, {
+                method: 'PUT',
+                body: data
+            });
+        }
+        
+        // Sinon, créer un FormData à partir de l'objet
         const formData = new FormData();
         Object.keys(data).forEach(key => {
             if (data[key] !== null && data[key] !== undefined) {
                 formData.append(key, data[key]);
             }
         });
+        
         return this.request(`/formateurs/${id}`, {
             method: 'PUT',
             body: formData
@@ -102,7 +134,7 @@ class ApiService {
         });
     }
 
-    // Apprenants
+    // Apprenants - MODIFIÉ pour être cohérent avec FormData
     async getApprenants() {
         return this.request('/apprenants');
     }
@@ -112,12 +144,22 @@ class ApiService {
     }
 
     async createApprenant(data) {
+        // Si data est déjà un FormData, l'utiliser directement
+        if (data instanceof FormData) {
+            return this.request('/apprenants', {
+                method: 'POST',
+                body: data
+            });
+        }
+        
+        // Sinon, créer un FormData à partir de l'objet
         const formData = new FormData();
         Object.keys(data).forEach(key => {
             if (data[key] !== null && data[key] !== undefined) {
                 formData.append(key, data[key]);
             }
         });
+        
         return this.request('/apprenants', {
             method: 'POST',
             body: formData
@@ -125,12 +167,22 @@ class ApiService {
     }
 
     async updateApprenant(id, data) {
+        // Si data est déjà un FormData, l'utiliser directement
+        if (data instanceof FormData) {
+            return this.request(`/apprenants/${id}`, {
+                method: 'PUT',
+                body: data
+            });
+        }
+        
+        // Sinon, créer un FormData à partir de l'objet
         const formData = new FormData();
         Object.keys(data).forEach(key => {
             if (data[key] !== null && data[key] !== undefined) {
                 formData.append(key, data[key]);
             }
         });
+        
         return this.request(`/apprenants/${id}`, {
             method: 'PUT',
             body: formData
@@ -142,8 +194,22 @@ class ApiService {
             method: 'DELETE'
         });
     }
+    async getApprenantStats() {
+        return this.request('/apprenants/stats/summary');
+    }
+    
+    // Apprenants - Inscription à une formation
+    async inscrireApprenant(apprenantId, formationId) {
+        return this.request(`/apprenants/${apprenantId}/inscrire`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ formationId })
+        });
+    }
 
-    // Inscriptions
+    // Inscriptions - RESTE EN JSON (pas de fichiers)
     async getInscriptions() {
         return this.request('/inscriptions');
     }
@@ -155,6 +221,13 @@ class ApiService {
     async createInscription(data) {
         return this.request('/inscriptions', {
             method: 'POST',
+            body: JSON.stringify(data)
+        });
+    }
+
+    async updateInscription(id, data) {
+        return this.request(`/inscriptions/${id}`, {
+            method: 'PUT',
             body: JSON.stringify(data)
         });
     }
