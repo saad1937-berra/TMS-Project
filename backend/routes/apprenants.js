@@ -1,18 +1,31 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const Apprenant = require('../models/Apprenant');
 const Formation = require('../models/Formation');
 
 const router = express.Router();
 
+// S'assurer que le dossier uploads existe
+const uploadDir = 'uploads';
+if (!fs.existsSync(uploadDir)) {
+    console.log('📁 Création du dossier uploads/');
+    fs.mkdirSync(uploadDir, { recursive: true });
+} else {
+    console.log('✅ Dossier uploads/ existe');
+}
+
 // Configuration de multer pour l'upload des photos
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/');
+    console.log('📤 Multer destination appelé');
+    cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
+    const filename = 'apprenant_' + Date.now() + path.extname(file.originalname);
+    console.log('📝 Multer filename:', filename);
+    cb(null, filename);
   }
 });
 
@@ -20,13 +33,16 @@ const upload = multer({
   storage: storage,
   limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
   fileFilter: (req, file, cb) => {
+    console.log('🔍 Multer fileFilter:', file.mimetype, file.originalname);
     const filetypes = /jpeg|jpg|png|webp/;
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
     const mimetype = filetypes.test(file.mimetype);
     
     if (mimetype && extname) {
+      console.log('✅ Fichier accepté');
       return cb(null, true);
     } else {
+      console.log('❌ Fichier rejeté');
       cb(new Error('Seules les images sont autorisées (jpeg, jpg, png, webp)'));
     }
   }
@@ -35,18 +51,17 @@ const upload = multer({
 // GET tous les apprenants avec filtres et pagination
 router.get('/', async (req, res) => {
   try {
+    console.log('GET /api/apprenants');
+    
     const { 
       page = 1, 
-      limit = 10, 
+      limit = 100,
       search, 
-      statut,
-      niveauEtude,
-      ville 
+      statut 
     } = req.query;
     
     const query = {};
     
-    // Recherche par nom, prénom ou email
     if (search) {
       query.$or = [
         { nom: { $regex: search, $options: 'i' } },
@@ -56,8 +71,6 @@ router.get('/', async (req, res) => {
     }
     
     if (statut) query.statut = statut;
-    if (niveauEtude) query.niveauEtude = niveauEtude;
-    if (ville) query['adresse.ville'] = ville;
     
     const apprenants = await Apprenant.find(query)
       .sort({ nom: 1, prenom: 1 })
@@ -67,6 +80,8 @@ router.get('/', async (req, res) => {
     
     const total = await Apprenant.countDocuments(query);
     
+    console.log(`${apprenants.length} apprenants trouvés`);
+    
     res.json({
       apprenants,
       currentPage: parseInt(page),
@@ -75,7 +90,7 @@ router.get('/', async (req, res) => {
     });
   } catch (err) {
     console.error('Error fetching apprenants:', err);
-    res.status(500).json({ message: 'Erreur serveur' });
+    res.status(500).json({ message: 'Erreur serveur', error: err.message });
   }
 });
 
@@ -92,28 +107,61 @@ router.get('/:id', async (req, res) => {
     res.json(apprenant);
   } catch (err) {
     console.error('Error fetching apprenant:', err);
-    res.status(500).json({ message: 'Erreur serveur' });
+    res.status(500).json({ message: 'Erreur serveur', error: err.message });
   }
 });
 
 // POST créer un nouvel apprenant
-router.post('/', upload.single('photo'), async (req, res) => {
+router.post('/', (req, res, next) => {
+  console.log('🔵 AVANT MULTER');
+  console.log('Content-Type:', req.headers['content-type']);
+  next();
+}, upload.single('photo'), (req, res, next) => {
+  console.log('🟢 APRÈS MULTER');
+  console.log('req.body:', req.body);
+  console.log('req.file:', req.file);
+  console.log('Keys in body:', Object.keys(req.body));
+  next();
+}, async (req, res) => {
   try {
+    console.log('POST /api/apprenants - Création apprenant');
+    
     const {
       nom,
       prenom,
       email,
       telephone,
       dateNaissance,
+      age,
       adresse,
       niveauEtude,
       profession,
       statut
     } = req.body;
     
+    console.log('Données extraites:', { nom, prenom, email, dateNaissance, age });
+    
+    // Validation
+    if (!nom || !prenom || !email || !dateNaissance || !age) {
+      console.log('❌ Validation échouée - champs manquants');
+      return res.status(400).json({ 
+        message: 'Les champs nom, prénom, email, date de naissance et âge sont obligatoires',
+        received: { nom, prenom, email, dateNaissance, age },
+        bodyKeys: Object.keys(req.body)
+      });
+    }
+    
+    if (!req.file) {
+      console.log('❌ Validation échouée - photo manquante');
+      return res.status(400).json({ 
+        message: 'La photo est obligatoire' 
+      });
+    }
+    
     // Vérifier si l'email existe déjà
     const existingApprenant = await Apprenant.findOne({ email });
     if (existingApprenant) {
+      console.log('❌ Email déjà utilisé:', email);
       return res.status(400).json({ message: 'Cet email est déjà utilisé' });
     }
     
@@ -127,43 +175,65 @@ router.post('/', upload.single('photo'), async (req, res) => {
       }
     }
     
-    const apprenant = new Apprenant({
+    const apprenantData = {
       nom,
       prenom,
       email,
       telephone,
       dateNaissance: new Date(dateNaissance),
+      age: parseInt(age),
       adresse: adresseObj,
       niveauEtude,
       profession,
       statut: statut || 'Actif',
-      photo: req.file ? req.file.filename : null
-    });
+      photo: req.file.filename
+    };
     
+    console.log('Création avec les données:', apprenantData);
+    
+    const apprenant = new Apprenant(apprenantData);
     const newApprenant = await apprenant.save();
+    
+    console.log('✅ Apprenant créé avec succès:', newApprenant._id);
+    
     res.status(201).json(newApprenant);
   } catch (err) {
-    console.error('Error creating apprenant:', err);
+    console.error('❌ Error creating apprenant:', err);
+    console.error('Stack:', err.stack);
     
     if (err.name === 'ValidationError') {
+      const errors = Object.values(err.errors).map(e => e.message);
+      console.error('Erreurs de validation:', errors);
       return res.status(400).json({ 
         message: 'Données invalides', 
-        errors: Object.values(err.errors).map(e => e.message) 
+        errors: errors
       });
     }
     
-    res.status(500).json({ message: 'Erreur serveur' });
+    res.status(500).json({ 
+      message: 'Erreur serveur',
+      error: err.message 
+    });
   }
 });
 
 // PUT modifier un apprenant existant
 router.put('/:id', upload.single('photo'), async (req, res) => {
   try {
+    console.log('PUT /api/apprenants/:id - Mise à jour apprenant');
+    console.log('Body:', req.body);
+    console.log('File:', req.file);
+    
     const updateData = { ...req.body };
     
     // Convertir la date de naissance
     if (updateData.dateNaissance) {
       updateData.dateNaissance = new Date(updateData.dateNaissance);
+    }
+    
+    // Convertir l'âge
+    if (updateData.age) {
+      updateData.age = parseInt(updateData.age);
     }
     
     // Parser l'adresse si nécessaire
@@ -173,7 +243,7 @@ router.put('/:id', upload.single('photo'), async (req, res) => {
           ? JSON.parse(updateData.adresse) 
           : updateData.adresse;
       } catch (e) {
-        // Garder tel quel si ce n'est pas du JSON valide
+        // Garder tel quel
       }
     }
     
@@ -215,7 +285,10 @@ router.put('/:id', upload.single('photo'), async (req, res) => {
       });
     }
     
-    res.status(500).json({ message: 'Erreur serveur' });
+    res.status(500).json({ 
+      message: 'Erreur serveur',
+      error: err.message 
+    });
   }
 });
 
@@ -238,176 +311,31 @@ router.delete('/:id', async (req, res) => {
     });
   } catch (err) {
     console.error('Error deleting apprenant:', err);
-    res.status(500).json({ message: 'Erreur serveur' });
-  }
-});
-
-// DELETE supprimer définitivement un apprenant
-router.delete('/:id/permanent', async (req, res) => {
-  try {
-    const apprenant = await Apprenant.findByIdAndDelete(req.params.id);
-    
-    if (!apprenant) {
-      return res.status(404).json({ message: 'Apprenant non trouvé' });
-    }
-    
-    res.json({ message: 'Apprenant supprimé définitivement' });
-  } catch (err) {
-    console.error('Error deleting apprenant:', err);
-    res.status(500).json({ message: 'Erreur serveur' });
-  }
-});
-
-// POST inscrire un apprenant à une formation
-router.post('/:id/inscrire', async (req, res) => {
-  try {
-    const { formationId } = req.body;
-    
-    // Vérifier si l'apprenant existe
-    const apprenant = await Apprenant.findById(req.params.id);
-    if (!apprenant) {
-      return res.status(404).json({ message: 'Apprenant non trouvé' });
-    }
-    
-    // Vérifier si la formation existe
-    const formation = await Formation.findById(formationId);
-    if (!formation) {
-      return res.status(404).json({ message: 'Formation non trouvée' });
-    }
-    
-    // Vérifier si l'apprenant est déjà inscrit
-    const dejaInscrit = apprenant.formationsInscrites.some(
-      inscription => inscription.formation.toString() === formationId
-    );
-    
-    if (dejaInscrit) {
-      return res.status(400).json({ message: 'Apprenant déjà inscrit à cette formation' });
-    }
-    
-    // Ajouter l'inscription
-    apprenant.formationsInscrites.push({
-      formation: formationId,
-      dateInscription: new Date(),
-      statut: 'Inscrit'
+    res.status(500).json({ 
+      message: 'Erreur serveur',
+      error: err.message 
     });
-    
-    await apprenant.save();
-    
-    res.json({
-      message: 'Apprenant inscrit à la formation avec succès',
-      inscription: apprenant.formationsInscrites[apprenant.formationsInscrites.length - 1]
-    });
-  } catch (err) {
-    console.error('Error enrolling apprenant:', err);
-    res.status(500).json({ message: 'Erreur serveur' });
-  }
-});
-
-// PUT mettre à jour le statut d'une inscription
-router.put('/:id/inscriptions/:inscriptionId', async (req, res) => {
-  try {
-    const { statut } = req.body;
-    
-    const apprenant = await Apprenant.findById(req.params.id);
-    if (!apprenant) {
-      return res.status(404).json({ message: 'Apprenant non trouvé' });
-    }
-    
-    const inscription = apprenant.formationsInscrites.id(req.params.inscriptionId);
-    if (!inscription) {
-      return res.status(404).json({ message: 'Inscription non trouvée' });
-    }
-    
-    inscription.statut = statut;
-    
-    if (statut === 'Terminé') {
-      inscription.dateFin = new Date();
-    }
-    
-    await apprenant.save();
-    
-    res.json({
-      message: 'Statut de l\'inscription mis à jour',
-      inscription
-    });
-  } catch (err) {
-    console.error('Error updating enrollment:', err);
-    res.status(500).json({ message: 'Erreur serveur' });
   }
 });
 
 // GET statistiques des apprenants
 router.get('/stats/summary', async (req, res) => {
   try {
-    const stats = await Apprenant.aggregate([
-      {
-        $facet: {
-          totalStats: [
-            {
-              $group: {
-                _id: null,
-                total: { $sum: 1 },
-                actifs: { 
-                  $sum: { $cond: [{ $eq: ['$statut', 'Actif'] }, 1, 0] } 
-                },
-                inactifs: { 
-                  $sum: { $cond: [{ $eq: ['$statut', 'Inactif'] }, 1, 0] } 
-                }
-              }
-            }
-          ],
-          niveauStats: [
-            {
-              $group: {
-                _id: '$niveauEtude',
-                count: { $sum: 1 }
-              }
-            },
-            { $sort: { count: -1 } }
-          ],
-          villeStats: [
-            {
-              $group: {
-                _id: '$adresse.ville',
-                count: { $sum: 1 }
-              }
-            },
-            { $sort: { count: -1 } },
-            { $limit: 10 }
-          ],
-          inscriptionStats: [
-            {
-              $project: {
-                month: { $month: '$dateInscription' },
-                year: { $year: '$dateInscription' }
-              }
-            },
-            {
-              $group: {
-                _id: { month: '$month', year: '$year' },
-                count: { $sum: 1 }
-              }
-            },
-            { $sort: { '_id.year': 1, '_id.month': 1 } },
-            { $limit: 12 }
-          ]
-        }
-      }
-    ]);
+    const total = await Apprenant.countDocuments();
+    const actifs = await Apprenant.countDocuments({ statut: 'Actif' });
+    const inactifs = await Apprenant.countDocuments({ statut: 'Inactif' });
     
-    const result = {
-      total: stats[0]?.totalStats[0]?.total || 0,
-      actifs: stats[0]?.totalStats[0]?.actifs || 0,
-      inactifs: stats[0]?.totalStats[0]?.inactifs || 0,
-      parNiveau: stats[0]?.niveauStats || [],
-      parVille: stats[0]?.villeStats || [],
-      inscriptionsMensuelles: stats[0]?.inscriptionStats || []
-    };
-    
-    res.json(result);
+    res.json({
+      total,
+      actifs,
+      inactifs
+    });
   } catch (err) {
-    console.error('Error fetching stats:', err);
-    res.status(500).json({ message: 'Erreur serveur' });
+    console.error('Erreur lors de la récupération des statistiques:', err);
+    res.status(500).json({ 
+      message: 'Erreur serveur',
+      error: err.message 
+    });
   }
 });
 

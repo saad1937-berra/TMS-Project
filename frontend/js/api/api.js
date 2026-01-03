@@ -2,45 +2,49 @@ const API_BASE_URL = 'http://localhost:5000/api';
 
 class ApiService {
     async request(endpoint, options = {}) {
-        const url = `${API_BASE_URL}${endpoint}`;
-        const config = {
-            headers: {
-                ...options.headers
-            },
-            ...options
-        };
+    const url = `${API_BASE_URL}${endpoint}`;
+    const config = {
+        headers: {},
+        ...options
+    };
 
-        // Ne pas définir Content-Type pour FormData (le navigateur le fera automatiquement avec boundary)
-        if (!(options.body instanceof FormData)) {
-            config.headers['Content-Type'] = 'application/json';
+    // Ne pas définir Content-Type pour FormData
+    if (!(options.body instanceof FormData)) {
+        config.headers['Content-Type'] = 'application/json';
+    }
+
+    try {
+        const response = await fetch(url, config);
+        
+        console.log('Response status:', response.status);
+        
+        // Pour les réponses DELETE (204 No Content)
+        if (response.status === 204) {
+            return { success: true };
         }
-
-        try {
-            const response = await fetch(url, config);
-            
-            // Si la réponse n'est pas OK, essayer de lire le message d'erreur
-            if (!response.ok) {
-                let errorMessage = `HTTP error! status: ${response.status}`;
-                try {
-                    const errorData = await response.json();
-                    errorMessage = errorData.message || errorMessage;
-                } catch (e) {
-                    // Si le corps n'est pas du JSON, utiliser le statut
-                }
-                throw new Error(errorMessage);
-            }
-            
-            // Pour les réponses DELETE (204 No Content), ne pas essayer de parser JSON
-            if (response.status === 204) {
-                return { success: true };
-            }
-            
-            return await response.json();
-        } catch (error) {
-            console.error('API request failed:', error);
+        
+        const data = await response.json();
+        console.log('Response data:', data);
+        
+        if (!response.ok) {
+            // Créer une erreur avec le message du serveur
+            const error = new Error(data.message || `HTTP error! status: ${response.status}`);
+            error.status = response.status;
+            error.data = data;
             throw error;
         }
+        
+        return data;
+    } catch (error) {
+        console.error('API request failed:', {
+            endpoint,
+            error: error.message,
+            status: error.status,
+            data: error.data
+        });
+        throw error;
     }
+}
 
     // Formations - MODIFIÉ pour utiliser FormData
     async getFormations() {
@@ -238,5 +242,6 @@ class ApiService {
         });
     }
 }
+
 
 const api = new ApiService();

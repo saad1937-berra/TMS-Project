@@ -11,9 +11,10 @@
         <h1>Gestion des Apprenants</h1>
         <nav>
             <ul>
-                <li><a href="../index.html">Accueil</a></li>
+                <li><a href="../../index.html">Accueil</a></li>
                 <li><a href="formations.html">Formations</a></li>
                 <li><a href="formateurs.html">Formateurs</a></li>
+            <li><a href="apprenants.html" class="active">Apprenant</a></li>
                 <li><a href="inscriptions.html">Inscriptions</a></li>
             </ul>
         </nav>
@@ -66,8 +67,10 @@
                 <label for="photo">Photo:</label>
                 <input type="file" id="photo" accept="image/*">
 
-                <button type="submit">Enregistrer</button>
-                <button type="button" id="cancel-btn">Annuler</button>
+                <div class="form-actions">
+                    <button type="submit" id="submit-btn">Enregistrer</button>
+                    <button type="button" id="cancel-btn">Annuler</button>
+                </div>
             </form>
         </section>
     </main>

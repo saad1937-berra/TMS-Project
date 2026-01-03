@@ -1,289 +1,340 @@
-// Apprenants page functionality
-// Apprenants page functionality
-document.addEventListener('DOMContentLoaded', function() {
-    loadApprenants();
+let currentApprenant = null;
+let isEditing = false;
 
-    document.getElementById('add-apprenant-btn').addEventListener('click', () => showApprenantForm());
-    document.getElementById('apprenant-form-element').addEventListener('submit', handleApprenantSubmit);
-    document.getElementById('cancel-btn').addEventListener('click', hideApprenantForm);
+document.addEventListener('DOMContentLoaded', function() {
+    const addApprenantBtn = document.getElementById('add-apprenant-btn');
+    const apprenantFormElement = document.getElementById('apprenant-form-element');
+    const cancelBtn = document.getElementById('cancel-btn');
+    
+    if (addApprenantBtn) {
+        addApprenantBtn.addEventListener('click', handleAddClick);
+    }
+    
+    if (apprenantFormElement) {
+        apprenantFormElement.addEventListener('submit', handleApprenantSubmit);
+    }
+    
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', hideApprenantForm);
+    }
+    
+    loadApprenants();
 });
 
 async function loadApprenants() {
     try {
-        // Note: api.getApprenants() retourne un objet avec une propriété 'apprenants'
+        console.log('Chargement des apprenants...');
         const response = await api.getApprenants();
-        const apprenants = response.apprenants || response; // Gérer les deux cas
+        console.log('Réponse API:', response);
+        
+        // Gérer les différents formats de réponse possibles
+        let apprenants;
+        
+        if (Array.isArray(response)) {
+            // Réponse directe sous forme de tableau
+            apprenants = response;
+        } else if (response && response.apprenants) {
+            // Réponse avec pagination
+            apprenants = response.apprenants;
+        } else if (response && response.data) {
+            // Autre format possible
+            apprenants = response.data;
+        } else {
+            console.error('Format de réponse inattendu:', response);
+            apprenants = [];
+        }
+        
+        console.log('Apprenants extraits:', apprenants);
         displayApprenants(apprenants);
+        
     } catch (error) {
         console.error('Error loading apprenants:', error);
-        showAlert('Erreur lors du chargement des apprenants');
+        showAlert('Erreur lors du chargement des apprenants', 'error');
     }
 }
 
 function displayApprenants(apprenants) {
     const container = document.getElementById('apprenants-container');
+    if (!container) return;
+    
     container.innerHTML = '';
 
     if (!apprenants || apprenants.length === 0) {
-        container.innerHTML = '<p>Aucun apprenant trouvé</p>';
+        container.innerHTML = '<p class="no-data">Aucun apprenant trouvé</p>';
         return;
     }
 
     apprenants.forEach(apprenant => {
         const apprenantDiv = document.createElement('div');
         apprenantDiv.className = 'apprenant-item';
+        
+        const dateNaissance = apprenant.dateNaissance ? 
+            new Date(apprenant.dateNaissance).toLocaleDateString('fr-FR') : 
+            'Non spécifié';
+        
+        const photoUrl = apprenant.photo ? 
+            `http://localhost:5000/uploads/${apprenant.photo}` : 
+            null;
+        
         apprenantDiv.innerHTML = `
-            <h3>${apprenant.nom} ${apprenant.prenom}</h3>
-            <p>Email: ${apprenant.email}</p>
-            <p>Âge: ${apprenant.age}</p>
-            <p>Niveau d'étude: ${apprenant.niveauEtude || 'Non spécifié'}</p>
-            <p>Statut: ${apprenant.statut || 'Actif'}</p>
-            ${apprenant.photo ? `<img src="http://localhost:5000/uploads/${apprenant.photo}" alt="Photo" style="width: 100px; height: 100px; object-fit: cover;">` : ''}
-            <div>
-                <button onclick="editApprenant('${apprenant._id}')">Modifier</button>
-                <button onclick="deleteApprenant('${apprenant._id}')">Supprimer</button>
+            <div class="apprenant-header">
+                <h3>${apprenant.nom} ${apprenant.prenom}</h3>
+                <span class="apprenant-statut ${apprenant.statut === 'Actif' ? 'statut-actif' : 'statut-inactif'}">
+                    ${apprenant.statut || 'Actif'}
+                </span>
+            </div>
+            <p><strong>Email:</strong> ${apprenant.email}</p>
+            <p><strong>Date de naissance:</strong> ${dateNaissance}</p>
+            <p><strong>Âge:</strong> ${apprenant.age} ans</p>
+            ${apprenant.telephone ? `<p><strong>Téléphone:</strong> ${apprenant.telephone}</p>` : ''}
+            ${apprenant.niveauEtude ? `<p><strong>Niveau d'étude:</strong> ${apprenant.niveauEtude}</p>` : ''}
+            ${apprenant.profession ? `<p><strong>Profession:</strong> ${apprenant.profession}</p>` : ''}
+            ${photoUrl ? `
+                <div class="apprenant-photo">
+                    <img src="${photoUrl}" alt="${apprenant.nom} ${apprenant.prenom}" 
+                         class="apprenant-thumbnail">
+                </div>
+            ` : ''}
+            ${apprenant.formationsInscrites && apprenant.formationsInscrites.length > 0 ? `
+                <p><strong>Formations inscrites:</strong> ${apprenant.formationsInscrites.length}</p>
+            ` : ''}
+            <div class="apprenant-actions">
+                <button class="btn-edit" onclick="editApprenant('${apprenant._id}')">Modifier</button>
+                <button class="btn-delete" onclick="deleteApprenant('${apprenant._id}')">Supprimer</button>
             </div>
         `;
         container.appendChild(apprenantDiv);
     });
 }
 
-function showApprenantForm(apprenant = null) {
-    document.getElementById('apprenants-list').style.display = 'none';
-    document.getElementById('apprenant-form').style.display = 'block';
+function handleAddClick() {
+    currentApprenant = null;
+    isEditing = false;
+    showApprenantForm();
+}
 
-    if (apprenant && apprenant._id) {
-        // Mode édition
-        document.getElementById('form-title').textContent = 'Modifier l\'Apprenant';
-        populateApprenantForm(apprenant);
+function showApprenantForm() {
+    const apprenantsList = document.getElementById('apprenants-list');
+    if (apprenantsList) {
+        apprenantsList.style.display = 'none';
+    }
+    
+    const formSection = document.getElementById('apprenant-form');
+    if (formSection) {
+        formSection.style.display = 'block';
+    }
+    
+    const title = document.getElementById('form-title');
+    if (title) {
+        title.textContent = isEditing ? 'Modifier l\'Apprenant' : 'Ajouter un Apprenant';
+    }
+    
+    // Gérer le message d'aide pour la photo
+    const photoInput = document.getElementById('photo');
+    const photoEditHelp = document.getElementById('photo-edit-help');
+    
+    if (isEditing) {
+        if (photoInput) photoInput.required = false;
+        if (photoEditHelp) photoEditHelp.style.display = 'block';
     } else {
-        // Mode ajout
-        document.getElementById('form-title').textContent = 'Ajouter un Apprenant';
-        // Réinitialiser le formulaire
-        document.getElementById('apprenant-form-element').reset();
-        // Effacer l'ID caché
-        document.getElementById('apprenant-id').value = '';
-        // Réinitialiser le champ photo
-        document.getElementById('photo').value = '';
+        if (photoInput) photoInput.required = true;
+        if (photoEditHelp) photoEditHelp.style.display = 'none';
+    }
+    
+    if (!isEditing) {
+        resetApprenantForm();
+    }
+}
+
+function resetApprenantForm() {
+    const form = document.getElementById('apprenant-form-element');
+    if (form) {
+        form.reset();
+    }
+    
+    const apprenantIdInput = document.getElementById('apprenant-id');
+    if (apprenantIdInput) {
+        apprenantIdInput.value = '';
+    }
+    
+    currentApprenant = null;
+    isEditing = false;
+    
+    const formTitle = document.getElementById('form-title');
+    if (formTitle) {
+        formTitle.textContent = 'Ajouter un Apprenant';
     }
 }
 
 function hideApprenantForm() {
-    document.getElementById('apprenant-form').style.display = 'none';
-    document.getElementById('apprenants-list').style.display = 'block';
-    // Réinitialiser le formulaire
-    document.getElementById('apprenant-form-element').reset();
+    const apprenantsList = document.getElementById('apprenants-list');
+    if (apprenantsList) {
+        apprenantsList.style.display = 'block';
+    }
+    
+    const formSection = document.getElementById('apprenant-form');
+    if (formSection) {
+        formSection.style.display = 'none';
+    }
+    
+    resetApprenantForm();
 }
 
 function populateApprenantForm(apprenant) {
-    document.getElementById('apprenant-id').value = apprenant._id;
+    currentApprenant = apprenant;
+    isEditing = true;
+    
+    const apprenantIdInput = document.getElementById('apprenant-id');
+    if (apprenantIdInput) {
+        apprenantIdInput.value = apprenant._id;
+    }
+    
     document.getElementById('nom').value = apprenant.nom || '';
     document.getElementById('prenom').value = apprenant.prenom || '';
     
-    // Formater la date pour l'input type="date"
     if (apprenant.dateNaissance) {
         const date = new Date(apprenant.dateNaissance);
         const formattedDate = date.toISOString().split('T')[0];
         document.getElementById('dateNaissance').value = formattedDate;
-    } else {
-        document.getElementById('dateNaissance').value = '';
     }
     
     document.getElementById('age').value = apprenant.age || '';
     document.getElementById('email').value = apprenant.email || '';
-    document.getElementById('niveauEtude').value = apprenant.niveauEtude || '';
-    
-    // Note: Ne pas modifier le champ photo lors de l'édition
-    // L'utilisateur doit explicitement choisir une nouvelle photo
-}
-
-async function handleApprenantSubmit(event) {
-    event.preventDefault();
-
-    const formData = new FormData();
-    formData.append('nom', document.getElementById('nom').value);
-    formData.append('prenom', document.getElementById('prenom').value);
-    formData.append('dateNaissance', document.getElementById('dateNaissance').value);
-    formData.append('age', parseInt(document.getElementById('age').value));
-    formData.append('email', document.getElementById('email').value);
-    formData.append('niveauEtude', document.getElementById('niveauEtude').value);
-
-    // Ajouter le statut par défaut
-    formData.append('statut', 'Actif');
-
-    const photoFile = document.getElementById('photo').files[0];
-    if (photoFile) {
-        formData.append('photo', photoFile);
-    }
-
-    const apprenantId = document.getElementById('apprenant-id').value;
-
-    try {
-        if (apprenantId) {
-            // Mode édition
-            await api.updateApprenant(apprenantId, formData);
-            showAlert('Apprenant mis à jour avec succès');
-        } else {
-            // Mode création - la photo est requise
-            if (!photoFile) {
-                showAlert('La photo est requise pour créer un nouvel apprenant');
-                return;
-            }
-            await api.createApprenant(formData);
-            showAlert('Apprenant créé avec succès');
-        }
-        hideApprenantForm();
-        loadApprenants();
-    } catch (error) {
-        console.error('Error saving apprenant:', error);
-        showAlert(`Erreur lors de la sauvegarde: ${error.message}`);
-    }
-}
-
-async function editApprenant(id) {
-    try {
-        const apprenant = await api.getApprenant(id);
-        showApprenantForm(apprenant);
-    } catch (error) {
-        console.error('Error loading apprenant:', error);
-        showAlert('Erreur lors du chargement de l\'apprenant');
-    }
-}
-
-async function deleteApprenant(id) {
-    if (confirm('Êtes-vous sûr de vouloir supprimer cet apprenant ?')) {
-        try {
-            await api.deleteApprenant(id);
-            showAlert('Apprenant supprimé avec succès');
-            loadApprenants();
-        } catch (error) {
-            console.error('Error deleting apprenant:', error);
-            showAlert('Erreur lors de la suppression de l\'apprenant');
-        }
-    }
-}
-
-// Exporter les fonctions pour les rendre accessibles depuis HTML
-window.editApprenant = editApprenant;
-window.deleteApprenant = deleteApprenant;
-
-async function loadApprenants() {
-    try {
-        const apprenants = await api.getApprenants();
-        displayApprenants(apprenants);
-    } catch (error) {
-        console.error('Error loading apprenants:', error);
-        showAlert('Erreur lors du chargement des apprenants');
-    }
-}
-
-function displayApprenants(apprenants) {
-    const container = document.getElementById('apprenants-container');
-    container.innerHTML = '';
-
-    apprenants.forEach(apprenant => {
-        const apprenantDiv = document.createElement('div');
-        apprenantDiv.className = 'apprenant-item';
-        apprenantDiv.innerHTML = `
-            <h3>${apprenant.nom} ${apprenant.prenom}</h3>
-            <p>Date de naissance: ${new Date(apprenant.dateNaissance).toLocaleDateString()}</p>
-            <p>Âge: ${apprenant.age}</p>
-            <p>Email: ${apprenant.email}</p>
-            <p>Niveau d'étude: ${apprenant.niveauEtude}</p>
-            ${apprenant.photo ? `<img src="http://localhost:5000/${apprenant.photo}" alt="Photo" style="width: 100px; height: 100px; object-fit: cover;">` : ''}
-            <button onclick="editApprenant('${apprenant._id}')">Modifier</button>
-            <button onclick="deleteApprenant('${apprenant._id}')">Supprimer</button>
-        `;
-        container.appendChild(apprenantDiv);
-    });
-}
-
-function showApprenantForm(apprenant = null) {
-    document.getElementById('apprenants-list').style.display = 'none';
-    document.getElementById('apprenant-form').style.display = 'block';
-
-    if (apprenant) {
-        document.getElementById('form-title').textContent = 'Modifier l\'Apprenant';
-        populateApprenantForm(apprenant);
-    } else {
-        document.getElementById('form-title').textContent = 'Ajouter un Apprenant';
-        document.getElementById('apprenant-form-element').reset();
-    }
-}
-
-function hideApprenantForm() {
-    document.getElementById('apprenant-form').style.display = 'none';
-    document.getElementById('apprenants-list').style.display = 'block';
-}
-
-function populateApprenantForm(apprenant) {
-    document.getElementById('apprenant-id').value = apprenant._id;
-    document.getElementById('nom').value = apprenant.nom;
-    document.getElementById('prenom').value = apprenant.prenom;
-    document.getElementById('dateNaissance').value = 
-        new Date(apprenant.dateNaissance).toISOString().split('T')[0];
-    document.getElementById('age').value = apprenant.age;
-    document.getElementById('email').value = apprenant.email;
     document.getElementById('telephone').value = apprenant.telephone || '';
     document.getElementById('niveauEtude').value = apprenant.niveauEtude || '';
     document.getElementById('profession').value = apprenant.profession || '';
+    
+    showApprenantForm();
 }
+
 async function handleApprenantSubmit(event) {
     event.preventDefault();
-
+    
+    console.log('=== SOUMISSION APPRENANT ===');
+    console.log('Mode édition:', isEditing);
+    
+    // Récupérer toutes les valeurs des champs
+    const nom = document.getElementById('nom').value.trim();
+    const prenom = document.getElementById('prenom').value.trim();
+    const dateNaissance = document.getElementById('dateNaissance').value;
+    const age = document.getElementById('age').value;
+    const email = document.getElementById('email').value.trim();
+    const telephone = document.getElementById('telephone')?.value.trim() || '';
+    const niveauEtude = document.getElementById('niveauEtude')?.value || '';
+    const profession = document.getElementById('profession')?.value.trim() || '';
+    const photoFile = document.getElementById('photo')?.files[0];
+    
+    // Validation côté client
+    if (!nom || !prenom || !dateNaissance || !age || !email) {
+        showAlert('Veuillez remplir tous les champs obligatoires (nom, prénom, date de naissance, âge, email)', 'error');
+        return;
+    }
+    
+    // Validation de l'email
+    const emailRegex = /^\S+@\S+\.\S+$/;
+    if (!emailRegex.test(email)) {
+        showAlert('Veuillez entrer un email valide', 'error');
+        return;
+    }
+    
+    // Validation de l'âge
+    const ageNum = parseInt(age);
+    if (isNaN(ageNum) || ageNum < 16 || ageNum > 100) {
+        showAlert('L\'âge doit être entre 16 et 100 ans', 'error');
+        return;
+    }
+    
+    // Vérifier la photo en mode création
+    if (!isEditing && !photoFile) {
+        showAlert('La photo est obligatoire pour créer un apprenant', 'error');
+        return;
+    }
+    
+    // Créer le FormData
     const formData = new FormData();
-    formData.append('nom', document.getElementById('nom').value);
-    formData.append('prenom', document.getElementById('prenom').value);
-    formData.append('dateNaissance', document.getElementById('dateNaissance').value);
-    formData.append('age', parseInt(document.getElementById('age').value));
-    formData.append('email', document.getElementById('email').value);
-    formData.append('niveauEtude', document.getElementById('niveauEtude').value);
-    formData.append('statut', 'Actif'); // Ajouter une valeur par défaut
-
-    const photoFile = document.getElementById('photo').files[0];
+    formData.append('nom', nom);
+    formData.append('prenom', prenom);
+    formData.append('dateNaissance', dateNaissance);
+    formData.append('age', ageNum);
+    formData.append('email', email);
+    formData.append('statut', 'Actif');
+    
+    if (telephone) formData.append('telephone', telephone);
+    if (niveauEtude) formData.append('niveauEtude', niveauEtude);
+    if (profession) formData.append('profession', profession);
+    
     if (photoFile) {
         formData.append('photo', photoFile);
+        console.log('Photo ajoutée:', photoFile.name);
     }
-
-    const apprenantId = document.getElementById('apprenant-id').value;
-
+    
+    // Log pour debug
+    console.log('Données envoyées:');
+    for (let pair of formData.entries()) {
+        console.log(pair[0] + ':', pair[1]);
+    }
+    
     try {
-        if (apprenantId) {
-            // Envoyer FormData directement, pas Object.fromEntries
-            await api.updateApprenant(apprenantId, formData);
-            showAlert('Apprenant mis à jour avec succès');
+        let result;
+        
+        if (isEditing && currentApprenant) {
+            // MODE MISE À JOUR
+            console.log('Mise à jour apprenant:', currentApprenant._id);
+            result = await api.updateApprenant(currentApprenant._id, formData);
+            showAlert('Apprenant modifié avec succès', 'success');
         } else {
-            // Envoyer FormData directement
-            await api.createApprenant(formData);
-            showAlert('Apprenant créé avec succès');
+            // MODE CRÉATION
+            console.log('Création nouvel apprenant');
+            result = await api.createApprenant(formData);
+            showAlert('Apprenant créé avec succès', 'success');
         }
+        
+        console.log('Résultat:', result);
         hideApprenantForm();
         loadApprenants();
+        
     } catch (error) {
-        console.error('Error saving apprenant:', error);
-        showAlert('Erreur lors de la sauvegarde de l\'apprenant');
+        console.error('Erreur complète:', error);
+        
+        // Afficher les erreurs de validation détaillées
+        if (error.data?.errors && Array.isArray(error.data.errors)) {
+            const errorMessages = error.data.errors.join('\n');
+            showAlert(`Erreurs de validation:\n${errorMessages}`, 'error');
+        } else {
+            const message = error.data?.message || error.message || 'Une erreur est survenue';
+            showAlert(message, 'error');
+        }
     }
 }
 
 async function editApprenant(id) {
     try {
         const apprenant = await api.getApprenant(id);
-        showApprenantForm(apprenant);
+        populateApprenantForm(apprenant);
     } catch (error) {
         console.error('Error loading apprenant:', error);
-        showAlert('Erreur lors du chargement de l\'apprenant');
+        showAlert('Erreur lors du chargement de l\'apprenant', 'error');
     }
 }
 
 async function deleteApprenant(id) {
-    if (confirmAction('Êtes-vous sûr de vouloir supprimer cet apprenant ?')) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer cet apprenant ? Cette action désactivera l\'apprenant.')) {
         try {
             await api.deleteApprenant(id);
-            showAlert('Apprenant supprimé avec succès');
+            showAlert('Apprenant désactivé avec succès', 'success');
             loadApprenants();
+            
+            const apprenantIdInput = document.getElementById('apprenant-id');
+            if (isEditing && apprenantIdInput && apprenantIdInput.value === id) {
+                hideApprenantForm();
+            }
         } catch (error) {
             console.error('Error deleting apprenant:', error);
-            showAlert('Erreur lors de la suppression de l\'apprenant');
+            showAlert('Erreur lors de la suppression de l\'apprenant', 'error');
         }
     }
 }
+
+// Exposer les fonctions globales
+window.editApprenant = editApprenant;
+window.deleteApprenant = deleteApprenant;

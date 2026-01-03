@@ -1,19 +1,50 @@
-// formations.js (frontend) - VERSION CORRIGÉE
 let currentFormation = null;
 let isEditing = false;
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Page formations chargée');
+    const addFormationBtn = document.getElementById('add-formation-btn');
+    const formationFormElement = document.getElementById('formation-form-element');
+    const cancelBtn = document.getElementById('cancel-btn');
+    const deleteBtn = document.getElementById('delete-btn');
     
-    // Attacher les événements
-    document.getElementById('add-formation-btn').addEventListener('click', handleAddClick);
-    document.getElementById('formation-form-element').addEventListener('submit', handleFormationSubmit);
-    document.getElementById('cancel-btn').addEventListener('click', hideFormationForm);
-    document.getElementById('delete-btn').addEventListener('click', handleDeleteClick);
+    if (addFormationBtn) {
+        addFormationBtn.addEventListener('click', handleAddClick);
+    }
     
-    // Initialiser
+    if (formationFormElement) {
+        formationFormElement.addEventListener('submit', handleFormationSubmit);
+    }
+    
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', hideFormationForm);
+    }
+    
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', handleDeleteClick);
+    }
+    
     loadFormateurs();
     loadFormations();
+    
+    const today = new Date().toISOString().split('T')[0];
+    const dateDebutInput = document.getElementById('dateDebut');
+    const dateFinInput = document.getElementById('dateFin');
+    
+    if (dateDebutInput) {
+        dateDebutInput.min = today;
+    }
+    
+    if (dateFinInput) {
+        dateFinInput.min = today;
+    }
+    
+    if (dateDebutInput) {
+        dateDebutInput.addEventListener('change', function() {
+            if (dateFinInput) {
+                dateFinInput.min = this.value;
+            }
+        });
+    }
 });
 
 async function loadFormations() {
@@ -38,6 +69,8 @@ async function loadFormateurs() {
 
 function updateFormateurSelect(formateurs) {
     const select = document.getElementById('formateurId');
+    if (!select) return;
+    
     select.innerHTML = '<option value="">Sélectionnez un formateur</option>';
     
     formateurs.forEach(formateur => {
@@ -50,10 +83,12 @@ function updateFormateurSelect(formateurs) {
 
 function displayFormations(formations) {
     const container = document.getElementById('formations-container');
+    if (!container) return;
+    
     container.innerHTML = '';
     
     if (formations.length === 0) {
-        container.innerHTML = '<p>Aucune formation trouvée</p>';
+        container.innerHTML = '<p class="no-data">Aucune formation trouvée</p>';
         return;
     }
     
@@ -82,7 +117,7 @@ function displayFormations(formations) {
                 <div class="formation-image">
                     <img src="http://localhost:5000/uploads/${formation.imageFormation}" 
                          alt="${formation.titre}" 
-                         style="max-width: 200px; max-height: 150px;">
+                         class="formation-thumbnail">
                 </div>
             ` : ''}
             <div class="formation-actions">
@@ -95,184 +130,225 @@ function displayFormations(formations) {
 }
 
 function handleAddClick() {
-    console.log('Mode AJOUT activé');
     currentFormation = null;
     isEditing = false;
     showFormationForm();
 }
 
 function showFormationForm() {
-    console.log('Affichage du formulaire, mode:', isEditing ? 'MODIFICATION' : 'AJOUT');
+    const formationsList = document.getElementById('formations-list');
+    if (formationsList) {
+        formationsList.style.display = 'none';
+    }
     
-    // Cacher la liste
-    document.getElementById('formations-list').style.display = 'none';
-    
-    // Afficher le formulaire
     const formSection = document.getElementById('formation-form');
-    formSection.style.display = 'block';
+    if (formSection) {
+        formSection.style.display = 'block';
+    }
     
-    // Mettre à jour le titre
     const title = document.getElementById('form-title');
-    title.textContent = isEditing ? 'Modifier la Formation' : 'Ajouter une Formation';
+    if (title) {
+        title.textContent = isEditing ? 'Modifier la Formation' : 'Ajouter une Formation';
+    }
     
-    // Gérer le champ image
     const imageInput = document.getElementById('imageFormation');
     const imageHelp = document.getElementById('image-help');
     
-    if (isEditing) {
-        // En mode modification, l'image n'est pas obligatoire
+    if (imageInput) {
         imageInput.required = false;
-        if (imageHelp) {
-            imageHelp.style.display = 'block';
-        }
-    } else {
-        // En mode ajout, l'image est optionnelle
-        imageInput.required = false;
-        if (imageHelp) {
-            imageHelp.style.display = 'none';
-        }
     }
     
-    // Réinitialiser le formulaire si c'est en mode ajout
+    if (imageHelp) {
+        imageHelp.style.display = isEditing ? 'block' : 'none';
+    }
+    
     if (!isEditing) {
         resetFormationForm();
     }
 }
 
 function resetFormationForm() {
-    console.log('Réinitialisation du formulaire');
-    
     const form = document.getElementById('formation-form-element');
-    form.reset();
+    if (form) {
+        form.reset();
+    }
     
-    // Réinitialiser le champ caché
-    document.getElementById('formation-id').value = '';
+    const formationIdInput = document.getElementById('formation-id');
+    if (formationIdInput) {
+        formationIdInput.value = '';
+    }
     
-    // Cacher l'image actuelle
-    document.getElementById('current-image').style.display = 'none';
-    document.getElementById('current-image-preview').src = '';
+    const currentImageDiv = document.getElementById('current-image');
+    if (currentImageDiv) {
+        currentImageDiv.style.display = 'none';
+    }
     
-    // Cacher le bouton supprimer
-    document.getElementById('delete-btn').style.display = 'none';
+    const currentImagePreview = document.getElementById('current-image-preview');
+    if (currentImagePreview) {
+        currentImagePreview.src = '';
+    }
     
-    // Réinitialiser les variables d'état
+    const deleteBtn = document.getElementById('delete-btn');
+    if (deleteBtn) {
+        deleteBtn.style.display = 'none';
+    }
+    
     currentFormation = null;
     isEditing = false;
     
-    // Remettre le titre
-    document.getElementById('form-title').textContent = 'Ajouter une Formation';
+    const formTitle = document.getElementById('form-title');
+    if (formTitle) {
+        formTitle.textContent = 'Ajouter une Formation';
+    }
     
-    // Définir la date minimale à aujourd'hui
     const today = new Date().toISOString().split('T')[0];
-    document.getElementById('dateDebut').min = today;
-    document.getElementById('dateFin').min = today;
+    const dateDebutInput = document.getElementById('dateDebut');
+    const dateFinInput = document.getElementById('dateFin');
+    
+    if (dateDebutInput) {
+        dateDebutInput.min = today;
+        dateDebutInput.value = '';
+    }
+    
+    if (dateFinInput) {
+        dateFinInput.min = today;
+        dateFinInput.value = '';
+    }
+    
+    const formateurSelect = document.getElementById('formateurId');
+    if (formateurSelect) {
+        formateurSelect.selectedIndex = 0;
+    }
+    
+    const niveauSelect = document.getElementById('niveau');
+    if (niveauSelect) {
+        niveauSelect.selectedIndex = 0;
+    }
 }
 
 function hideFormationForm() {
-    console.log('Masquage du formulaire');
+    const formationsList = document.getElementById('formations-list');
+    if (formationsList) {
+        formationsList.style.display = 'block';
+    }
     
-    // Afficher la liste
-    document.getElementById('formations-list').style.display = 'block';
+    const formSection = document.getElementById('formation-form');
+    if (formSection) {
+        formSection.style.display = 'none';
+    }
     
-    // Cacher le formulaire
-    document.getElementById('formation-form').style.display = 'none';
-    
-    // Réinitialiser le formulaire
     resetFormationForm();
 }
 
 function populateFormationForm(formation) {
-    console.log('Pré-remplissage du formulaire pour:', formation.titre);
-    
     currentFormation = formation;
     isEditing = true;
     
-    // Remplir les champs
-    document.getElementById('formation-id').value = formation._id;
+    const formationIdInput = document.getElementById('formation-id');
+    if (formationIdInput) {
+        formationIdInput.value = formation._id;
+    }
+    
     document.getElementById('titre').value = formation.titre || '';
     document.getElementById('description').value = formation.description || '';
     document.getElementById('categorie').value = formation.categorie || '';
     document.getElementById('dureeHeures').value = formation.dureeHeures || '';
-    document.getElementById('dateDebut').value = formation.dateDebut ? 
-        new Date(formation.dateDebut).toISOString().split('T')[0] : '';
-    document.getElementById('dateFin').value = formation.dateFin ? 
-        new Date(formation.dateFin).toISOString().split('T')[0] : '';
+    
+    const startDate = formation.dateDebut ? new Date(formation.dateDebut).toISOString().split('T')[0] : '';
+    const endDate = formation.dateFin ? new Date(formation.dateFin).toISOString().split('T')[0] : '';
+    
+    const dateDebutInput = document.getElementById('dateDebut');
+    const dateFinInput = document.getElementById('dateFin');
+    
+    if (dateDebutInput) {
+        dateDebutInput.value = startDate;
+    }
+    
+    if (dateFinInput) {
+        dateFinInput.value = endDate;
+        dateFinInput.min = startDate;
+    }
+    
     document.getElementById('niveau').value = formation.niveau || '';
     document.getElementById('formateurId').value = formation.formateurId ? formation.formateurId._id : '';
     document.getElementById('capacite').value = formation.capacite || '';
     
-    // Afficher l'image actuelle si elle existe
-    if (formation.imageFormation) {
-        document.getElementById('current-image').style.display = 'block';
-        document.getElementById('current-image-preview').src = 
-            `http://localhost:5000/uploads/formations/${formation.imageFormation}`;
-    } else {
-        document.getElementById('current-image').style.display = 'none';
+    const currentImageDiv = document.getElementById('current-image');
+    const currentImagePreview = document.getElementById('current-image-preview');
+    
+    if (formation.imageFormation && currentImageDiv && currentImagePreview) {
+        currentImageDiv.style.display = 'block';
+        const imageUrl = `http://localhost:5000/uploads/${formation.imageFormation}`;
+        currentImagePreview.src = imageUrl;
+        currentImagePreview.alt = formation.titre;
+    } else if (currentImageDiv) {
+        currentImageDiv.style.display = 'none';
     }
     
-    // Afficher le bouton supprimer
-    document.getElementById('delete-btn').style.display = 'inline-block';
+    const deleteBtn = document.getElementById('delete-btn');
+    if (deleteBtn) {
+        deleteBtn.style.display = 'inline-block';
+    }
     
-    // Afficher le formulaire
     showFormationForm();
 }
 
 async function handleFormationSubmit(event) {
     event.preventDefault();
-    console.log('Soumission du formulaire, mode:', isEditing ? 'MODIFICATION' : 'AJOUT');
     
-    // Créer FormData pour gérer les fichiers
+    console.log('=== SOUMISSION FORMULAIRE ===');
+    console.log('Mode édition:', isEditing);
+    
     const formData = new FormData();
     
-    // Ajouter les champs texte
     const fields = [
         'titre', 'description', 'categorie', 'dureeHeures',
         'dateDebut', 'dateFin', 'niveau', 'formateurId', 'capacite'
     ];
     
     fields.forEach(field => {
-        const value = document.getElementById(field).value;
-        if (value) {
-            formData.append(field, value);
+        const element = document.getElementById(field);
+        if (element && element.value) {
+            formData.append(field, element.value);
+            console.log(`${field}:`, element.value);
         }
     });
     
-    // Ajouter l'image si un fichier est sélectionné
-    const imageFile = document.getElementById('imageFormation').files[0];
-    if (imageFile) {
-        formData.append('imageFormation', imageFile);
-        console.log('Image ajoutée:', imageFile.name);
+    const imageFileInput = document.getElementById('imageFormation');
+    if (imageFileInput && imageFileInput.files.length > 0) {
+        formData.append('imageFormation', imageFileInput.files[0]);
+        console.log('Image ajoutée:', imageFileInput.files[0].name);
     }
     
-    const formationId = document.getElementById('formation-id').value;
-    
     try {
-        if (isEditing && formationId) {
-            console.log('Mise à jour de la formation:', formationId);
-            // Mode modification - utiliser FormData directement
-            await api.updateFormation(formationId, formData);
-            showAlert('Formation mise à jour avec succès', 'success');
+        let result;
+        
+        if (isEditing && currentFormation) {
+            // MODE MISE À JOUR
+            console.log('Mise à jour formation:', currentFormation._id);
+            result = await api.updateFormation(currentFormation._id, formData);
+            showAlert('Formation modifiée avec succès', 'success');
         } else {
-            console.log('Création d\'une nouvelle formation');
-            // Mode création - utiliser FormData directement
-            await api.createFormation(formData);
+            // MODE CRÉATION
+            console.log('Création nouvelle formation');
+            result = await api.createFormation(formData);
             showAlert('Formation créée avec succès', 'success');
         }
         
+        console.log('Résultat:', result);
         hideFormationForm();
         loadFormations();
+        
     } catch (error) {
-        console.error('Error saving formation:', error);
-        showAlert('Erreur lors de la sauvegarde de la formation: ' + (error.message || ''), 'error');
+        console.error('Erreur:', error);
+        const message = error.data?.message || error.message || 'Une erreur est survenue';
+        showAlert(message, 'error');
     }
 }
 
 async function editFormation(id) {
-    console.log('Édition de la formation ID:', id);
-    
     try {
         const formation = await api.getFormation(id);
-        console.log('Formation chargée:', formation);
         populateFormationForm(formation);
     } catch (error) {
         console.error('Error loading formation:', error);
@@ -281,13 +357,16 @@ async function editFormation(id) {
 }
 
 async function deleteFormation(id) {
-    console.log('Suppression de la formation ID:', id);
-    
-    if (confirm('Êtes-vous sûr de vouloir supprimer cette formation ?')) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer cette formation ? Cette action est irréversible.')) {
         try {
             await api.deleteFormation(id);
             showAlert('Formation supprimée avec succès', 'success');
             loadFormations();
+            
+            const formationIdInput = document.getElementById('formation-id');
+            if (isEditing && formationIdInput && formationIdInput.value === id) {
+                hideFormationForm();
+            }
         } catch (error) {
             console.error('Error deleting formation:', error);
             showAlert('Erreur lors de la suppression de la formation', 'error');
@@ -296,12 +375,12 @@ async function deleteFormation(id) {
 }
 
 async function handleDeleteClick() {
-    const formationId = document.getElementById('formation-id').value;
+    const formationIdInput = document.getElementById('formation-id');
+    const formationId = formationIdInput ? formationIdInput.value : '';
     if (!formationId) return;
     
     deleteFormation(formationId);
 }
 
-// Exposer les fonctions globales
 window.editFormation = editFormation;
 window.deleteFormation = deleteFormation;

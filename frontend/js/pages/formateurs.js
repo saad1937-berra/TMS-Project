@@ -3,7 +3,6 @@ let currentFormateur = null;
 let isEditing = false;
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Page formateurs chargée');
     
     // Attacher les événements
     document.getElementById('add-formateur-btn').addEventListener('click', handleAddClick);
@@ -28,7 +27,7 @@ async function loadFormateurs() {
 }
 
 function displayFormateurs(formateurs) {
-    const container = document.getElementById('formateurs-container');
+    const container = document.getElementById('formateurs_container');
     container.innerHTML = '';
     
     if (formateurs.length === 0) {
@@ -70,14 +69,12 @@ function displayFormateurs(formateurs) {
 }
 
 function handleAddClick() {
-    console.log('Mode AJOUT activé');
     currentFormateur = null;
     isEditing = false;
     showFormateurForm();
 }
 
 function showFormateurForm() {
-    console.log('Affichage du formulaire, mode:', isEditing ? 'MODIFICATION' : 'AJOUT');
     
     // Cacher la liste
     document.getElementById('formateurs-list').style.display = 'none';
@@ -115,7 +112,6 @@ function showFormateurForm() {
 }
 
 function resetFormateurForm() {
-    console.log('Réinitialisation du formulaire');
     
     const form = document.getElementById('formateur-form-element');
     form.reset();
@@ -135,7 +131,6 @@ function resetFormateurForm() {
 }
 
 function hideFormateurForm() {
-    console.log('Masquage du formulaire');
     
     // Afficher la liste
     document.getElementById('formateurs-list').style.display = 'block';
@@ -148,7 +143,6 @@ function hideFormateurForm() {
 }
 
 function populateFormateurForm(formateur) {
-    console.log('Pré-remplissage du formulaire pour:', formateur.nom);
     
     currentFormateur = formateur;
     isEditing = true;
@@ -168,7 +162,6 @@ function populateFormateurForm(formateur) {
 
 async function handleFormateurSubmit(event) {
     event.preventDefault();
-    console.log('Soumission du formulaire, mode:', isEditing ? 'MODIFICATION' : 'AJOUT');
     
     // Créer FormData pour gérer les fichiers
     const formData = new FormData();
@@ -185,19 +178,16 @@ async function handleFormateurSubmit(event) {
     const photoFile = document.getElementById('photo').files[0];
     if (photoFile) {
         formData.append('photo', photoFile);
-        console.log('Photo ajoutée:', photoFile.name);
     }
     
     const formateurId = document.getElementById('formateur-id').value;
     
     try {
         if (isEditing && formateurId) {
-            console.log('Mise à jour du formateur:', formateurId);
             // Mode modification
             await api.updateFormateur(formateurId, formData);
             showAlert('Formateur mis à jour avec succès', 'success');
         } else {
-            console.log('Création d\'un nouveau formateur');
             // Mode création - vérifier qu'une photo est fournie
             if (!photoFile) {
                 showAlert('Une photo est requise pour créer un formateur', 'error');
@@ -216,11 +206,9 @@ async function handleFormateurSubmit(event) {
 }
 
 async function editFormateur(id) {
-    console.log('Édition du formateur ID:', id);
     
     try {
         const formateur = await api.getFormateur(id);
-        console.log('Formateur chargé:', formateur);
         populateFormateurForm(formateur);
     } catch (error) {
         console.error('Error loading formateur:', error);
@@ -229,7 +217,6 @@ async function editFormateur(id) {
 }
 
 async function deleteFormateur(id) {
-    console.log('Suppression du formateur ID:', id);
     
     if (confirm('Êtes-vous sûr de vouloir supprimer ce formateur ?')) {
         try {

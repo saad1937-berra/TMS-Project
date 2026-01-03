@@ -5,12 +5,93 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TMS - Training Management System</title>
     <link rel="stylesheet" href="./frontend/styles.css">
+    <style>
+        /* Styles supplémentaires pour les cartes cliquables */
+        .overview-item {
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .overview-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            transition: left 0.5s ease;
+        }
+        
+        .overview-item:hover::before {
+            left: 100%;
+        }
+        
+        .overview-item h4 {
+            margin-bottom: 10px;
+        }
+        
+        .overview-item p {
+            margin-bottom: 15px;
+        }
+        
+        .overview-item .icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+            opacity: 0.9;
+        }
+        
+        .overview-item .arrow {
+            font-size: 1.5em;
+            margin-top: 10px;
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        
+        .overview-item:hover .arrow {
+            opacity: 1;
+            transform: translateX(5px);
+        }
+        
+        #welcome {
+            background: linear-gradient(135deg, rgba(74, 111, 165, 0.1), rgba(58, 86, 133, 0.1));
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .stat-card h3 {
+            color: var(--primary-color);
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+        
+        .stat-card p {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+    </style>
 </head>
 <body>
     <header>
-        <h1>Training Management System</h1>
+        <h1>🎓 Training Management System</h1>
         <nav>
             <ul>
+                <li><a href="index.html" class="active">Accueil</a></li>
                 <li><a href="./frontend/pages/formations.html">Formations</a></li>
                 <li><a href="./frontend/pages/formateurs.html">Formateurs</a></li>
                 <li><a href="./frontend/pages/apprenants.html">Apprenants</a></li>
@@ -21,36 +102,141 @@
 
     <main>
         <section id="welcome">
-            <h2>Bienvenue dans le système de gestion de formation</h2>
-            <p>Utilisez le menu de navigation pour accéder aux différentes sections du système.</p>
+            <h2>👋 Bienvenue dans le système de gestion de formation</h2>
+            <p style="font-size: 1.1em; color: var(--text-secondary); margin-top: 15px;">
+                Gérez efficacement vos formations, formateurs, apprenants et inscriptions en un seul endroit
+            </p>
+            
+            <!-- Statistiques rapides (optionnel) -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3 id="stat-formations">--</h3>
+                    <p>Formations actives</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="stat-formateurs">--</h3>
+                    <p>Formateurs</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="stat-apprenants">--</h3>
+                    <p>Apprenants</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="stat-inscriptions">--</h3>
+                    <p>Inscriptions</p>
+                </div>
+            </div>
         </section>
 
         <section id="overview">
-            <h3>Aperçu du système</h3>
+            <h3>📊 Accès rapide</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                Cliquez sur une section pour y accéder directement
+            </p>
+            
             <div class="overview-grid">
-                <div class="overview-item">
+                <div class="overview-item" onclick="window.location.href='./frontend/pages/formations.html'">
+                    <div class="icon">📚</div>
                     <h4>Formations</h4>
-                    <p>Gérer les formations disponibles</p>
+                    <p>Gérer les formations disponibles, créer de nouvelles sessions et suivre leur progression</p>
+                    <div class="arrow">→</div>
                 </div>
-                <div class="overview-item">
+                
+                <div class="overview-item" onclick="window.location.href='./frontend/pages/formateurs.html'">
+                    <div class="icon">👨‍🏫</div>
                     <h4>Formateurs</h4>
-                    <p>Gérer les formateurs du système</p>
+                    <p>Gérer les formateurs, leurs spécialités et leurs profils professionnels</p>
+                    <div class="arrow">→</div>
                 </div>
-                <div class="overview-item">
+                
+                <div class="overview-item" onclick="window.location.href='./frontend/pages/apprenants.html'">
+                    <div class="icon">👥</div>
                     <h4>Apprenants</h4>
-                    <p>Gérer les apprenants inscrits</p>
+                    <p>Gérer les apprenants inscrits, leurs informations et leur parcours de formation</p>
+                    <div class="arrow">→</div>
                 </div>
-                <div class="overview-item">
+                
+                <div class="overview-item" onclick="window.location.href='./frontend/pages/inscriptions.html'">
+                    <div class="icon">📝</div>
                     <h4>Inscriptions</h4>
-                    <p>Gérer les inscriptions aux formations</p>
+                    <p>Gérer les inscriptions aux formations, les statuts et les paiements</p>
+                    <div class="arrow">→</div>
+                </div>
+            </div>
+        </section>
+
+        <section id="features" style="margin-top: 30px;">
+            <h3>✨ Fonctionnalités principales</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 20px;">
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #27ae60;">
+                    <h4 style="color: #27ae60; margin-bottom: 10px;">✅ Gestion complète</h4>
+                    <p style="color: var(--text-secondary); font-size: 0.95em;">
+                        Toutes les fonctionnalités CRUD pour gérer formations, formateurs et apprenants
+                    </p>
+                </div>
+                
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #3498db;">
+                    <h4 style="color: #3498db; margin-bottom: 10px;">📊 Suivi en temps réel</h4>
+                    <p style="color: var(--text-secondary); font-size: 0.95em;">
+                        Suivez les inscriptions, les statuts de paiement et la capacité des formations
+                    </p>
+                </div>
+                
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #e74c3c;">
+                    <h4 style="color: #e74c3c; margin-bottom: 10px;">🔒 Validation robuste</h4>
+                    <p style="color: var(--text-secondary); font-size: 0.95em;">
+                        Validation des données côté client et serveur pour garantir l'intégrité
+                    </p>
+                </div>
+                
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #f39c12;">
+                    <h4 style="color: #f39c12; margin-bottom: 10px;">📱 Interface moderne</h4>
+                    <p style="color: var(--text-secondary); font-size: 0.95em;">
+                        Design responsive et intuitif qui s'adapte à tous les appareils
+                    </p>
                 </div>
             </div>
         </section>
     </main>
 
     <script src="./frontend/js/api/api.js"></script>
-    <script src="./frontend/js/components/header.js"></script>
-    <script src="./frontend/js/components/footer.js"></script>
-    <script src="./frontend/js/utils/helpers.js"></script>
+    <script>
+        // Charger les statistiques au démarrage
+        async function loadStats() {
+            try {
+                // Formations
+                const formations = await api.getFormations();
+                document.getElementById('stat-formations').textContent = 
+                    Array.isArray(formations) ? formations.length : 0;
+                
+                // Formateurs
+                const formateurs = await api.getFormateurs();
+                document.getElementById('stat-formateurs').textContent = 
+                    Array.isArray(formateurs) ? formateurs.length : 0;
+                
+                // Apprenants
+                const apprenantsResponse = await api.getApprenants();
+                const apprenants = apprenantsResponse.apprenants || apprenantsResponse || [];
+                document.getElementById('stat-apprenants').textContent = 
+                    Array.isArray(apprenants) ? apprenants.length : 0;
+                
+                // Inscriptions
+                const inscriptions = await api.getInscriptions();
+                document.getElementById('stat-inscriptions').textContent = 
+                    Array.isArray(inscriptions) ? inscriptions.length : 0;
+                
+            } catch (error) {
+                console.error('Erreur lors du chargement des statistiques:', error);
+                // Afficher 0 si erreur
+                document.getElementById('stat-formations').textContent = '0';
+                document.getElementById('stat-formateurs').textContent = '0';
+                document.getElementById('stat-apprenants').textContent = '0';
+                document.getElementById('stat-inscriptions').textContent = '0';
+            }
+        }
+        
+        // Charger les stats au chargement de la page
+        document.addEventListener('DOMContentLoaded', loadStats);
+    </script>
 </body>
 </html>

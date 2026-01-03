@@ -11,7 +11,8 @@
         <h1>Gestion des Formateurs</h1>
         <nav>
             <ul>
-                <li><a href="../index.html">Accueil</a></li>
+                <li><a href="../../index.html">Accueil</a></li>
+                <li><a href="formateurs.html" class="active">Formateurs</a></li>
                 <li><a href="formations.html">Formations</a></li>
                 <li><a href="apprenants.html">Apprenants</a></li>
                 <li><a href="inscriptions.html">Inscriptions</a></li>
@@ -23,7 +24,7 @@
         <section id="formateurs-list">
             <h2>Liste des Formateurs</h2>
             <button id="add-formateur-btn">Ajouter un Formateur</button>
-            <div id="formateurs-container"></div>
+            <div id="formateurs_container"></div>
         </section>
 
         <!-- Remplacez la section du formulaire par : -->
@@ -55,8 +56,10 @@
                     <small id="photo-help">Pour la modification, laisser vide pour garder la photo actuelle</small>
                 </div>
 
-                <button type="submit">Enregistrer</button>
-                <button type="button" id="cancel-btn">Annuler</button>
+                <div class="form-actions">
+                    <button type="submit" id="submit-btn">Enregistrer</button>
+                    <button type="button" id="cancel-btn">Annuler</button>
+                </div>
             </form>
         </section>
     </main>

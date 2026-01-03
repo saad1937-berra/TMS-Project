@@ -5,16 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestion des Inscriptions - TMS</title>
     <link rel="stylesheet" href="../styles.css">
+    
 </head>
 <body>
     <header>
         <h1>Gestion des Inscriptions</h1>
         <nav>
             <ul>
-                <li><a href="../index.html">Accueil</a></li>
-                <li><a href="formations.html">Formations</a></li>
+                <li><a href="../../index.html">Accueil</a></li>
                 <li><a href="formateurs.html">Formateurs</a></li>
+                <li><a href="formations.html">Formations</a></li>
                 <li><a href="apprenants.html">Apprenants</a></li>
+                <li><a href="inscriptions.html" class="active">Inscriptions</a></li>
             </ul>
         </nav>
     </header>
@@ -28,23 +30,55 @@
 
         <section id="inscription-form" style="display: none;">
             <h2 id="form-title">Ajouter une Inscription</h2>
+            
+            <div class="info-message" id="edit-info" style="display: none;">
+                ℹ️ En mode modification, vous pouvez uniquement changer le statut et le paiement.
+            </div>
+            
             <form id="inscription-form-element">
                 <input type="hidden" id="inscription-id">
-                <label for="apprenantId">Apprenant:</label>
-                <select id="apprenantId" required></select>
+                
+                <div class="form-group">
+                    <label for="apprenantId">Apprenant *</label>
+                    <select id="apprenantId" required>
+                        <option value="">Chargement des apprenants...</option>
+                    </select>
+                </div>
 
-                <label for="formationId">Formation:</label>
-                <select id="formationId" required></select>
+                <div class="form-group">
+                    <label for="formationId">Formation *</label>
+                    <select id="formationId" required>
+                        <option value="">Chargement des formations...</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="statut">Statut *</label>
+                    <select id="statut" required>
+                        <option value="Inscrit">Inscrit</option>
+                        <option value="Terminé">Terminé</option>
+                        <option value="Annulé">Annulé</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="paiement">Paiement *</label>
+                    <select id="paiement" required>
+                        <option value="Non payé">Non payé</option>
+                        <option value="Payé">Payé</option>
+                    </select>
+                </div>
 
-                <button type="submit">Enregistrer</button>
-                <button type="button" id="cancel-btn">Annuler</button>
+                <div class="form-actions">
+                    <button type="submit" id="submit-btn" class="btn-primary">Enregistrer</button>
+                    <button type="button" id="cancel-btn" class="btn-secondary">Annuler</button>
+                    <button type="button" id="delete-btn" class="btn-delete" style="display: none; margin-left: auto;">Supprimer</button>
+                </div>
             </form>
         </section>
     </main>
 
     <script src="../js/api/api.js"></script>
-    <script src="../js/components/header.js"></script>
-    <script src="../js/components/footer.js"></script>
     <script src="../js/utils/helpers.js"></script>
     <script src="../js/pages/inscriptions.js"></script>
 </body>

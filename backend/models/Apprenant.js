@@ -21,27 +21,80 @@ const inscriptionSchema = new mongoose.Schema({
 });
 
 const apprenantSchema = new mongoose.Schema({
-  nom: { type: String, required: true },
-  prenom: { type: String, required: true },
-  dateNaissance: { type: Date, required: true },
-  age: { type: Number, required: true },
-  email: { type: String, required: true, unique: true },
-  telephone: { type: String },
+  nom: { 
+    type: String, 
+    required: [true, 'Le nom est obligatoire'],
+    trim: true
+  },
+  prenom: { 
+    type: String, 
+    required: [true, 'Le prénom est obligatoire'],
+    trim: true
+  },
+  dateNaissance: { 
+    type: Date, 
+    required: [true, 'La date de naissance est obligatoire']
+  },
+  age: { 
+    type: Number, 
+    required: [true, 'L\'âge est obligatoire'],
+    min: 16,
+    max: 100
+  },
+  email: { 
+    type: String, 
+    required: [true, 'L\'email est obligatoire'], 
+    unique: true,
+    lowercase: true,
+    trim: true,
+    match: [/^\S+@\S+\.\S+$/, 'Email invalide']
+  },
+  telephone: { 
+    type: String,
+    trim: true
+  },
   adresse: {
     rue: String,
     ville: String,
     codePostal: String,
     pays: String
   },
-  niveauEtude: { type: String },
-  profession: { type: String },
-  photo: { type: String, required: true },
+  niveauEtude: { 
+    type: String 
+  },
+  profession: { 
+    type: String 
+  },
+  photo: { 
+    type: String, 
+    required: [true, 'La photo est obligatoire']
+  },
   statut: {
     type: String,
     enum: ['Actif', 'Inactif'],
     default: 'Actif'
   },
   formationsInscrites: [inscriptionSchema]
-}, { timestamps: true });
+}, { 
+  timestamps: true 
+});
 
-module.exports = mongoose.model('Apprenant', apprenantSchema);
+// Calculer l'âge automatiquement si non fourni
+apprenantSchema.pre('save', function(next) {
+  if (this.dateNaissance && !this.age) {
+    const today = new Date();
+    const birthDate = new Date(this.dateNaissance);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    
+    this.age = age;
+  }
+  next();
+});
+
+// Export sécurisé pour éviter l'erreur OverwriteModelError
+module.exports = mongoose.models.Apprenant || mongoose.model('Apprenant', apprenantSchema);
