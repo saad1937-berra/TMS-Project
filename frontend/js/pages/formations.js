@@ -296,8 +296,6 @@ function populateFormationForm(formation) {
 async function handleFormationSubmit(event) {
     event.preventDefault();
     
-    console.log('=== SOUMISSION FORMULAIRE ===');
-    console.log('Mode édition:', isEditing);
     
     const formData = new FormData();
     
@@ -310,14 +308,12 @@ async function handleFormationSubmit(event) {
         const element = document.getElementById(field);
         if (element && element.value) {
             formData.append(field, element.value);
-            console.log(`${field}:`, element.value);
         }
     });
     
     const imageFileInput = document.getElementById('imageFormation');
     if (imageFileInput && imageFileInput.files.length > 0) {
         formData.append('imageFormation', imageFileInput.files[0]);
-        console.log('Image ajoutée:', imageFileInput.files[0].name);
     }
     
     try {
@@ -325,17 +321,14 @@ async function handleFormationSubmit(event) {
         
         if (isEditing && currentFormation) {
             // MODE MISE À JOUR
-            console.log('Mise à jour formation:', currentFormation._id);
             result = await api.updateFormation(currentFormation._id, formData);
             showAlert('Formation modifiée avec succès', 'success');
         } else {
             // MODE CRÉATION
-            console.log('Création nouvelle formation');
             result = await api.createFormation(formData);
             showAlert('Formation créée avec succès', 'success');
         }
         
-        console.log('Résultat:', result);
         hideFormationForm();
         loadFormations();
         

@@ -77,10 +77,6 @@ router.get('/:id', async (req, res) => {
 // POST create formation
 router.post('/', upload.single('imageFormation'), async (req, res) => {
   try {
-    console.log('=== DÉBUT CREATION FORMATION ===');
-    console.log('Body reçu:', req.body);
-    console.log('Fichier reçu:', req.file);
-    
     const { 
       titre, 
       description, 
@@ -95,7 +91,6 @@ router.post('/', upload.single('imageFormation'), async (req, res) => {
     
     // Validation des champs requis
     if (!titre || !description || !categorie || !dureeHeures || !dateDebut || !dateFin || !niveau || !formateurId || !capacite) {
-      console.log('❌ Champ manquant');
       const missing = [];
       if (!titre) missing.push('titre');
       if (!description) missing.push('description');
@@ -114,13 +109,10 @@ router.post('/', upload.single('imageFormation'), async (req, res) => {
     }
     
     // Vérifier si le formateur existe
-    console.log('Recherche formateur ID:', formateurId);
     const formateur = await Formateur.findById(formateurId);
     if (!formateur) {
-      console.log('❌ Formateur non trouvé');
       return res.status(400).json({ message: 'Formateur non trouvé' });
     }
-    console.log('✅ Formateur trouvé:', formateur.nom);
 
     // Construire l'objet formation
     const formationData = {
@@ -137,22 +129,17 @@ router.post('/', upload.single('imageFormation'), async (req, res) => {
 
     // Ajouter l'image si elle existe
     if (req.file) {
-      console.log('✅ Fichier image reçu:', req.file.filename);
       formationData.imageFormation = req.file.filename;
     } else {
-      console.log('ℹ️ Aucun fichier image');
     }
 
-    console.log('Données formation:', formationData);
     
     const formation = new Formation(formationData);
-    console.log('Sauvegarde formation...');
     
     const newFormation = await formation.save();
-    console.log('✅ Formation sauvegardée:', newFormation._id);
     
     const populatedFormation = await Formation.findById(newFormation._id).populate('formateurId');
-    console.log('✅ Formation peuplée');
+
     
     return res.status(201).json(populatedFormation);
   } catch (err) {

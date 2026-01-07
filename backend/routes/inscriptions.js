@@ -5,8 +5,6 @@ const Apprenant = require('../models/Apprenant');
 
 const router = express.Router();
 
-console.log('✅ Route inscriptions chargée');
-
 // GET all inscriptions
 router.get('/', async (req, res) => {
   try {
@@ -44,7 +42,6 @@ router.post('/', async (req, res) => {
   try {
     const { apprenantId, formationId, statut, paiement } = req.body;
 
-    console.log('Création inscription:', { apprenantId, formationId, statut, paiement });
 
     // Validation des champs requis
     if (!apprenantId || !formationId) {
@@ -106,7 +103,6 @@ router.post('/', async (req, res) => {
       .populate('apprenantId')
       .populate('formationId');
 
-    console.log('Inscription créée avec succès:', populatedInscription._id);
     res.status(201).json(populatedInscription);
 
   } catch (err) {

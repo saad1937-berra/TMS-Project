@@ -7,24 +7,14 @@ const Formation = require('../models/Formation');
 
 const router = express.Router();
 
-// S'assurer que le dossier uploads existe
-const uploadDir = 'uploads';
-if (!fs.existsSync(uploadDir)) {
-    console.log('📁 Création du dossier uploads/');
-    fs.mkdirSync(uploadDir, { recursive: true });
-} else {
-    console.log('✅ Dossier uploads/ existe');
-}
 
 // Configuration de multer pour l'upload des photos
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    console.log('📤 Multer destination appelé');
-    cb(null, uploadDir);
+    cb(null, 'uploads/');
   },
   filename: (req, file, cb) => {
     const filename = 'apprenant_' + Date.now() + path.extname(file.originalname);
-    console.log('📝 Multer filename:', filename);
     cb(null, filename);
   }
 });
@@ -33,16 +23,14 @@ const upload = multer({
   storage: storage,
   limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
   fileFilter: (req, file, cb) => {
-    console.log('🔍 Multer fileFilter:', file.mimetype, file.originalname);
     const filetypes = /jpeg|jpg|png|webp/;
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
     const mimetype = filetypes.test(file.mimetype);
     
     if (mimetype && extname) {
-      console.log('✅ Fichier accepté');
+
       return cb(null, true);
     } else {
-      console.log('❌ Fichier rejeté');
       cb(new Error('Seules les images sont autorisées (jpeg, jpg, png, webp)'));
     }
   }
@@ -51,7 +39,6 @@ const upload = multer({
 // GET tous les apprenants avec filtres et pagination
 router.get('/', async (req, res) => {
   try {
-    console.log('GET /api/apprenants');
     
     const { 
       page = 1, 
@@ -79,9 +66,7 @@ router.get('/', async (req, res) => {
       .populate('formationsInscrites.formation', 'titre categorie');
     
     const total = await Apprenant.countDocuments(query);
-    
-    console.log(`${apprenants.length} apprenants trouvés`);
-    
+        
     res.json({
       apprenants,
       currentPage: parseInt(page),
@@ -113,18 +98,13 @@ router.get('/:id', async (req, res) => {
 
 // POST créer un nouvel apprenant
 router.post('/', (req, res, next) => {
-  console.log('🔵 AVANT MULTER');
-  console.log('Content-Type:', req.headers['content-type']);
+
   next();
 }, upload.single('photo'), (req, res, next) => {
-  console.log('🟢 APRÈS MULTER');
-  console.log('req.body:', req.body);
-  console.log('req.file:', req.file);
-  console.log('Keys in body:', Object.keys(req.body));
+
   next();
 }, async (req, res) => {
   try {
-    console.log('POST /api/apprenants - Création apprenant');
     
     const {
       nom,
@@ -139,11 +119,9 @@ router.post('/', (req, res, next) => {
       statut
     } = req.body;
     
-    console.log('Données extraites:', { nom, prenom, email, dateNaissance, age });
     
     // Validation
     if (!nom || !prenom || !email || !dateNaissance || !age) {
-      console.log('❌ Validation échouée - champs manquants');
       return res.status(400).json({ 
         message: 'Les champs nom, prénom, email, date de naissance et âge sont obligatoires',
         received: { nom, prenom, email, dateNaissance, age },
@@ -152,7 +130,6 @@ router.post('/', (req, res, next) => {
     }
     
     if (!req.file) {
-      console.log('❌ Validation échouée - photo manquante');
       return res.status(400).json({ 
         message: 'La photo est obligatoire' 
       });
@@ -161,7 +138,6 @@ router.post('/', (req, res, next) => {
     // Vérifier si l'email existe déjà
     const existingApprenant = await Apprenant.findOne({ email });
     if (existingApprenant) {
-      console.log('❌ Email déjà utilisé:', email);
       return res.status(400).json({ message: 'Cet email est déjà utilisé' });
     }
     
@@ -189,12 +165,10 @@ router.post('/', (req, res, next) => {
       photo: req.file.filename
     };
     
-    console.log('Création avec les données:', apprenantData);
     
     const apprenant = new Apprenant(apprenantData);
     const newApprenant = await apprenant.save();
     
-    console.log('✅ Apprenant créé avec succès:', newApprenant._id);
     
     res.status(201).json(newApprenant);
   } catch (err) {
@@ -220,9 +194,7 @@ router.post('/', (req, res, next) => {
 // PUT modifier un apprenant existant
 router.put('/:id', upload.single('photo'), async (req, res) => {
   try {
-    console.log('PUT /api/apprenants/:id - Mise à jour apprenant');
-    console.log('Body:', req.body);
-    console.log('File:', req.file);
+
     
     const updateData = { ...req.body };
     

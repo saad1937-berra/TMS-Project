@@ -42,9 +42,6 @@ async function loadInscriptions() {
 async function loadApprenants() {
     try {
         const response = await api.getApprenants();
-        console.log('Apprenants - Réponse brute:', response);
-        console.log('Type de réponse:', typeof response);
-        console.log('Est un tableau:', Array.isArray(response));
         
         // Gérer les différents formats de réponse
         let apprenants;
@@ -55,7 +52,6 @@ async function loadApprenants() {
         } else if (response && response.apprenants && Array.isArray(response.apprenants)) {
             // Réponse avec pagination
             apprenants = response.apprenants;
-            console.log('Apprenants extraits de response.apprenants');
         } else if (response && response.data && Array.isArray(response.data)) {
             // Autre format possible
             apprenants = response.data;
@@ -65,8 +61,6 @@ async function loadApprenants() {
             return;
         }
         
-        console.log('Apprenants finaux:', apprenants);
-        console.log('Nombre d\'apprenants:', apprenants.length);
         
         if (!Array.isArray(apprenants)) {
             console.error('ERREUR: apprenants n\'est toujours pas un tableau!');
@@ -83,7 +77,6 @@ async function loadApprenants() {
 async function loadFormations() {
     try {
         const response = await api.getFormations();
-        console.log('Formations - Réponse brute:', response);
         
         // Gérer les différents formats de réponse
         let formations;
@@ -101,8 +94,6 @@ async function loadFormations() {
             formations = [];
         }
         
-        console.log('Formations finales:', formations);
-        console.log('Nombre de formations:', formations.length);
         
         if (!Array.isArray(formations)) {
             console.error('ERREUR: formations n\'est pas un tableau!');
@@ -195,7 +186,6 @@ function populateApprenantSelect(apprenants) {
         select.appendChild(option);
     });
     
-    console.log(`${apprenants.length} apprenants chargés`);
 }
 
 function populateFormationSelect(formations) {
@@ -222,7 +212,6 @@ function populateFormationSelect(formations) {
         select.appendChild(option);
     });
     
-    console.log(`${formations.length} formations chargées`);
 }
 
 function handleAddClick() {
@@ -344,8 +333,6 @@ function populateInscriptionForm(inscription) {
 async function handleInscriptionSubmit(event) {
     event.preventDefault();
     
-    console.log('=== SOUMISSION INSCRIPTION ===');
-    console.log('Mode édition:', isEditing);
     
     const inscriptionData = {
         apprenantId: document.getElementById('apprenantId').value,
@@ -354,14 +341,12 @@ async function handleInscriptionSubmit(event) {
         paiement: document.getElementById('paiement')?.value || 'Non payé'
     };
     
-    console.log('Données:', inscriptionData);
     
     try {
         let result;
         
         if (isEditing && currentInscription) {
             // MODE MISE À JOUR - seulement statut et paiement
-            console.log('Mise à jour inscription:', currentInscription._id);
             const updateData = {
                 statut: inscriptionData.statut,
                 paiement: inscriptionData.paiement
@@ -370,12 +355,10 @@ async function handleInscriptionSubmit(event) {
             showAlert('Inscription modifiée avec succès', 'success');
         } else {
             // MODE CRÉATION
-            console.log('Création nouvelle inscription');
             result = await api.createInscription(inscriptionData);
             showAlert('Inscription créée avec succès', 'success');
         }
         
-        console.log('Résultat:', result);
         hideInscriptionForm();
         loadInscriptions();
         

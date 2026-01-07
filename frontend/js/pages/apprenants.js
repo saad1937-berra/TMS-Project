@@ -23,9 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 async function loadApprenants() {
     try {
-        console.log('Chargement des apprenants...');
         const response = await api.getApprenants();
-        console.log('Réponse API:', response);
         
         // Gérer les différents formats de réponse possibles
         let apprenants;
@@ -44,7 +42,6 @@ async function loadApprenants() {
             apprenants = [];
         }
         
-        console.log('Apprenants extraits:', apprenants);
         displayApprenants(apprenants);
         
     } catch (error) {
@@ -210,8 +207,6 @@ function populateApprenantForm(apprenant) {
 async function handleApprenantSubmit(event) {
     event.preventDefault();
     
-    console.log('=== SOUMISSION APPRENANT ===');
-    console.log('Mode édition:', isEditing);
     
     // Récupérer toutes les valeurs des champs
     const nom = document.getElementById('nom').value.trim();
@@ -265,13 +260,10 @@ async function handleApprenantSubmit(event) {
     
     if (photoFile) {
         formData.append('photo', photoFile);
-        console.log('Photo ajoutée:', photoFile.name);
     }
     
     // Log pour debug
-    console.log('Données envoyées:');
     for (let pair of formData.entries()) {
-        console.log(pair[0] + ':', pair[1]);
     }
     
     try {
@@ -279,17 +271,14 @@ async function handleApprenantSubmit(event) {
         
         if (isEditing && currentApprenant) {
             // MODE MISE À JOUR
-            console.log('Mise à jour apprenant:', currentApprenant._id);
             result = await api.updateApprenant(currentApprenant._id, formData);
             showAlert('Apprenant modifié avec succès', 'success');
         } else {
             // MODE CRÉATION
-            console.log('Création nouvel apprenant');
             result = await api.createApprenant(formData);
             showAlert('Apprenant créé avec succès', 'success');
         }
         
-        console.log('Résultat:', result);
         hideApprenantForm();
         loadApprenants();
         
